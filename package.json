@@ -2,7 +2,7 @@
   "name": "fraq-plugin-github",
   "type": "module",
   "version": "0.1.0",
-  "description": "Fraq plugin for GitHub commands, webhooks, README previews, and webpage screenshots",
+  "description": "Forward GitHub App events to QQ groups with Fraq",
   "files": [
     "dist"
   ],
@@ -39,8 +39,5 @@
   "peerDependencies": {
     "@fraqjs/fraq": "^0.13.0",
     "@fraqjs/plugin-hono": "^0.1.0"
-  },
-  "dependencies": {
-    "playwright": "^1.61.1"
   }
 }

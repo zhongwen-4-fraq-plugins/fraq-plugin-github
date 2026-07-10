@@ -1,16 +1,26 @@
-import { definePlugin, param } from '@fraqjs/fraq';
+import { definePlugin } from '@fraqjs/fraq';
+import { HonoService } from '@fraqjs/plugin-hono';
 
-export const ExamplePlugin = definePlugin({
-  name: 'example-plugin', // Change this to your plugin's name
-  apply(ctx) {
-    // Start coding here!
-    ctx.router
-      .command('echo')
-      .arg('content', param.str())
-      .execute((session, { content }) => {
-        session.reply(`You said: ${content}`);
-      });
+import { registerCommands } from './commands.js';
+import { GitHubEventService } from './service.js';
+import type { GitHubPluginOptions } from './types.js';
+
+export { normalizeRepository } from './repository.js';
+export { GitHubEventService } from './service.js';
+export { SubscriptionStore } from './subscriptions.js';
+export type { GitHubPluginOptions, GitHubWebhookPayload } from './types.js';
+export { formatWebhookEvent, verifyWebhookSignature } from './webhook.js';
+
+const GitHubPlugin = definePlugin({
+  name: 'github',
+  inject: { hono: HonoService },
+  provides: [GitHubEventService],
+  async apply(ctx, options: GitHubPluginOptions) {
+    const service = await GitHubEventService.create(ctx.client, ctx.logger, options);
+    ctx.provide(GitHubEventService, service);
+    service.installWebhook(ctx.hono);
+    registerCommands(ctx.router.group('github'), service, ctx.logger);
   },
 });
 
-export default ExamplePlugin; // Also export the plugin as default
+export default GitHubPlugin;
