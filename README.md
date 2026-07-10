@@ -104,62 +104,59 @@ privateKey: [
 
 确保公网域名已把 `/github/auth` 和 `/github/app/webhook` 转发到 Hono 的端口。
 
-## 基础命令
+## 命令表
 
-以下示例都以默认的 `github` 命令组为前缀。
+所有命令默认使用 `github` 前缀。`[参数]` 表示可以省略，`<参数>` 表示必须提供。
 
-### App 安装与用户授权
+| 分类 | 命令 | 权限或前置条件 | 说明 |
+| --- | --- | --- | --- |
+| 帮助 | `github help` | 无 | 查看简要命令帮助。 |
+| App | `github install` | 配置 `appSlug` | 获取 GitHub App 安装链接；别名：`github 安装`。 |
+| App | `github install check [owner/repo]` | App JWT | 检查仓库是否安装 App；省略仓库时使用群绑定仓库。 |
+| App | `github install revoke [owner/repo]` | 插件管理员或群管理员 | 从 GitHub 真正卸载 App，可能影响其他群，请谨慎使用。 |
+| 授权 | `github auth` | 配置 OAuth Client | 获取当前 QQ 用户的 GitHub OAuth 授权链接；别名：`github 授权`。 |
+| 授权 | `github auth check` | 无 | 查看当前 QQ 用户绑定的 GitHub 账号。 |
+| 授权 | `github auth revoke` | 已授权 | 撤销当前 QQ 用户的 GitHub OAuth 授权。 |
+| 群设置 | `github bind <owner/repo>` | 插件管理员或群管理员 | 设置本群默认仓库；别名：`github 绑定`。 |
+| 群设置 | `github unbind` | 插件管理员或群管理员 | 解除本群默认仓库；别名：`github 解绑`。 |
+| 订阅 | `github subscribe <owner/repo>` | 插件管理员或群管理员 | 订阅仓库的全部 GitHub App 事件。 |
+| 订阅 | `github subscribe <owner/repo> <event[/action] ...>` | 插件管理员或群管理员 | 订阅一个或多个事件或指定 action；别名：`github 订阅`。 |
+| 订阅 | `github unsubscribe <owner/repo>` | 插件管理员或群管理员 | 取消仓库的全部群事件订阅。 |
+| 订阅 | `github unsubscribe <owner/repo> <event[/action] ...>` | 插件管理员或群管理员 | 只取消指定事件或 action；别名：`github 取消订阅`。 |
+| 订阅 | `github subscriptions` | 群聊 | 查看本群全部事件订阅。 |
+| 搜索 | `github search <关键词>` | GitHub API | 搜索仓库；别名：`github 搜索`。 |
+| 搜索 | `github search repo <关键词>` | GitHub API | 搜索仓库。 |
+| 搜索 | `github search user <关键词>` | GitHub API | 搜索 GitHub 用户。 |
+| 搜索 | `github search code <关键词>` | 建议先 OAuth 授权 | 搜索 GitHub 代码。 |
+| 查询 | `github contribution [用户名]` | OAuth 授权 | 查看用户最近一年的贡献图；省略用户名时使用已授权账号。 |
+| 查询 | `github repo [owner/repo]` | GitHub API | 查看仓库简介、Star、Fork、Issue、语言和默认分支。 |
+| 查询 | `github view [目标]` | GitHub API | 查看仓库、Issue、PR、Commit 或 Release；目标也可以是 GitHub URL。 |
+| 查询 | `github link [目标]` | GitHub API | 获取仓库、Issue 或 PR 的 GitHub 链接。 |
+| 查询 | `github readme [owner/repo]` | GitHub API | 查看仓库 README。 |
+| 查询 | `github license [owner/repo]` | GitHub API | 查看仓库许可证。 |
+| 查询 | `github content <owner/repo> <文件路径>` | GitHub API | 查看仓库内的文本文件。 |
+| 查询 | `github release [owner/repo] [tag]` | GitHub API | 查看最新 Release 或指定 tag；只有一个无斜杠参数时视为 tag。 |
+| 查询 | `github deployments [owner/repo]` | GitHub API | 查看最近 10 个 Deployment；带仓库参数时也可使用 `deployment`。 |
+| 查询 | `github diff [目标]` | GitHub API | 查看 Pull Request Diff。 |
+| 仓库操作 | `github star [owner/repo]` | OAuth 授权 | Star 仓库。 |
+| 仓库操作 | `github unstar [owner/repo]` | OAuth 授权 | 取消 Star 仓库。 |
+| Issue/PR | `github comment [目标] <内容>` | OAuth 授权 | 评论 Issue 或 PR。 |
+| Issue/PR | `github label [目标] <标签 ...>` | OAuth 授权 | 添加一个或多个标签。 |
+| Issue/PR | `github unlabel [目标] <标签 ...>` | OAuth 授权 | 删除一个或多个标签。 |
+| Issue/PR | `github close [目标] [原因]` | OAuth 授权 | 关闭 Issue 或 PR；提供原因时会先发布评论。 |
+| Issue/PR | `github reopen [目标]` | OAuth 授权 | 重新开启 Issue 或 PR。 |
+| Pull Request | `github approve [目标] [审核意见]` | OAuth 授权 | 批准 Pull Request。 |
+| Pull Request | `github merge [目标] [提交标题]` | OAuth 授权 | 使用 merge 方式合并 Pull Request。 |
+| Pull Request | `github squash [目标] [提交标题]` | OAuth 授权 | 使用 squash 方式合并 Pull Request。 |
+| Pull Request | `github rebase [目标] [提交标题]` | OAuth 授权 | 使用 rebase 方式合并 Pull Request。 |
 
-```text
-github install
-github install check [owner/repo]
-github install revoke [owner/repo]
+### 参数省略规则
 
-github auth
-github auth check
-github auth revoke
-```
-
-`install revoke` 会从 GitHub 真正卸载 App，可能影响其他群，请谨慎使用。
-
-### 群绑定与事件订阅
-
-```text
-github bind owner/repo
-github unbind
-
-github subscribe owner/repo
-github subscribe owner/repo issues/opened issues/closed pull_request push
-github unsubscribe owner/repo issues/closed
-github unsubscribe owner/repo
-github subscriptions
-```
-
-- `event` 订阅该事件的全部 action。
-- `event/action` 只订阅指定 action。
-- 不提供事件时订阅该仓库的全部 App 事件。
-- `bind` 设置本群默认仓库，之后许多命令可省略 `owner/repo`。
-
-## 查询与预览
-
-```text
-github search 关键词
-github search repo 关键词
-github search user 关键词
-github search code 关键词
-
-github contribution [用户名]
-github repo [owner/repo]
-github view owner/repo#123
-github view https://github.com/owner/repo/pull/123
-github link [owner/repo#123]
-github readme [owner/repo]
-github license [owner/repo]
-github content owner/repo path/to/file
-github release [owner/repo] [tag]
-github deployments [owner/repo]
-github diff owner/repo#123
-```
+- `event` 订阅该事件的全部 action，`event/action` 只订阅指定 action。
+- `bind` 设置本群默认仓库，标为 `[owner/repo]` 的查询可使用该默认值。
+- Issue/PR 目标可以写成 `owner/repo#123` 或完整 GitHub URL。
+- 回复一条包含 Issue 或 PR 链接的消息后，可以省略写操作、`view`、`link` 和 `diff` 的目标。
+- GitHub 写操作记录属于 OAuth 授权对应的 GitHub 用户。
 
 直接发送以下内容也会显示预览：
 
@@ -170,39 +167,6 @@ https://github.com/owner/repo/issues/123
 https://github.com/owner/repo/commit/sha
 https://github.com/owner/repo/releases/tag/v1.0.0
 ```
-
-## GitHub 写操作
-
-这些命令需要先执行 `github auth`：
-
-```text
-github star [owner/repo]
-github unstar [owner/repo]
-
-github comment owner/repo#123 评论内容
-github label owner/repo#123 bug help-wanted
-github unlabel owner/repo#123 bug
-github close owner/repo#123 [原因]
-github reopen owner/repo#123
-
-github approve owner/repo#123 [审核意见]
-github merge owner/repo#123 [提交标题]
-github squash owner/repo#123 [提交标题]
-github rebase owner/repo#123
-```
-
-也可以先回复一条包含 Issue 或 PR 链接的消息，再省略目标：
-
-```text
-github comment 已处理
-github label bug
-github close 已完成
-github approve 检查通过
-github squash
-github diff
-```
-
-GitHub 上的操作记录属于 OAuth 授权对应的 GitHub 用户。
 
 ## 配置项
 
