@@ -1,11 +1,11 @@
 # Cockpit — fraq-plugin-github
 
-Focus: GitHub App 事件推送功能已完成
+Focus: QQ-GitHub-Bot 的 GitHub 功能对齐已完成
 
 ## In flight
 
 ## Next
 
-- 配置 GitHub App 并在实际 QQ 群中进行联调
+- 使用真实 GitHub App 凭据和 QQ 群进行联调
 
 ## Open questions

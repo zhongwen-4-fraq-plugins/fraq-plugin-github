@@ -1,5 +1,3 @@
-const repositoryPattern = /^[a-z0-9_.-]+\/[a-z0-9_.-]+$/i;
-
 export function normalizeRepository(input: string): string | undefined {
   const value = input
     .trim()
@@ -10,5 +8,5 @@ export function normalizeRepository(input: string): string | undefined {
     .slice(0, 2)
     .join('/')
     .replace(/\.git$/i, '');
-  return repository && repositoryPattern.test(repository) ? repository.toLowerCase() : undefined;
+  return repository && /^[a-z0-9_.-]+\/[a-z0-9_.-]+$/i.test(repository) ? repository.toLowerCase() : undefined;
 }

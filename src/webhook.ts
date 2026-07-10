@@ -27,6 +27,9 @@ export function formatWebhookEvent(event: string, payload: GitHubWebhookPayload)
     const action = payload.pull_request.merged ? 'merged' : (payload.action ?? '更新');
     return `🔀 [${repository}] PR #${payload.pull_request.number} ${action}：${payload.pull_request.title ?? ''}\n${payload.pull_request.html_url ?? ''}`.trim();
   }
+  if (event === 'pull_request_review' && payload.pull_request) {
+    return `👀 [${repository}] ${actor} ${payload.review?.state ?? payload.action ?? 'reviewed'} PR #${payload.pull_request.number}\n${payload.review?.body?.slice(0, 300) ?? ''}\n${payload.review?.html_url ?? payload.pull_request.html_url ?? ''}`.trim();
+  }
   if (event === 'release' && payload.release) {
     const name = payload.release.name ?? payload.release.tag_name ?? '';
     return `🚀 [${repository}] Release ${name} ${payload.action ?? ''}\n${payload.release.html_url ?? ''}`.trim();
@@ -34,6 +37,9 @@ export function formatWebhookEvent(event: string, payload: GitHubWebhookPayload)
   if (event === 'workflow_run' && payload.workflow_run) {
     const result = payload.workflow_run.conclusion ?? payload.workflow_run.status ?? payload.action ?? '';
     return `⚙️ [${repository}] Workflow ${payload.workflow_run.name ?? ''}：${result}\n${payload.workflow_run.html_url ?? ''}`.trim();
+  }
+  if (event === 'star') {
+    return `⭐ [${repository}] ${actor} ${payload.star?.starred_at ? '添加了 Star' : '取消了 Star'}\n${payload.repository?.html_url ?? ''}`.trim();
   }
   if (event === 'ping') return `✅ [${repository}] GitHub App Webhook 连接成功`;
 

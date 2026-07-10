@@ -2,13 +2,15 @@ import { Context, type milky, type Session } from '@fraqjs/fraq';
 import { createMockMilkyClient, createRandomGroup, createRandomGroupMember } from '@fraqjs/mock';
 import HonoPlugin, { HonoService } from '@fraqjs/plugin-hono';
 
+import { GitHubApi } from '../src/github-api.js';
 import GitHubPlugin from '../src/index.js';
 import { normalizeRepository } from '../src/repository.js';
 import { SubscriptionStore } from '../src/subscriptions.js';
+import { parseIssueTarget } from '../src/targets.js';
 import { formatWebhookEvent, verifyWebhookSignature } from '../src/webhook.js';
 
 import assert from 'node:assert/strict';
-import { createHmac } from 'node:crypto';
+import { createHmac, generateKeyPairSync } from 'node:crypto';
 import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -18,6 +20,11 @@ test('规范化 GitHub 仓库地址', () => {
   assert.equal(normalizeRepository('FraqJS/Fraq'), 'fraqjs/fraq');
   assert.equal(normalizeRepository('https://github.com/FraqJS/Fraq/issues/1'), 'fraqjs/fraq');
   assert.equal(normalizeRepository('invalid'), undefined);
+  assert.deepEqual(parseIssueTarget('https://github.com/FraqJS/Fraq/pull/12'), {
+    repository: 'fraqjs/fraq',
+    number: 12,
+  });
+  assert.deepEqual(parseIssueTarget('#7', 'fraqjs/fraq'), { repository: 'fraqjs/fraq', number: 7 });
 });
 
 test('持久化 QQ 群的仓库订阅', async () => {
@@ -30,11 +37,47 @@ test('持久化 QQ 群的仓库订阅', async () => {
     assert.deepEqual(store.groupsFor('fraqjs/fraq'), [10001]);
     assert.equal(await store.subscribe(10001, 'fraqjs/fraq'), false);
     assert.equal(await store.subscribe(10002, 'fraqjs/fraq'), true);
+    assert.equal(await store.subscribe(10003, 'fraqjs/fraq', [{ event: 'issues', actions: ['opened'] }]), true);
+    assert.deepEqual(store.groupsFor('fraqjs/fraq', 'issues', 'closed'), [10001, 10002]);
+    assert.deepEqual(store.groupsFor('fraqjs/fraq', 'issues', 'opened'), [10001, 10002, 10003]);
+    assert.deepEqual(store.groupsFor('fraqjs/fraq', 'issues'), [10001, 10002]);
     assert.match(await readFile(file, 'utf8'), /"10002"/);
     assert.equal(await store.unsubscribe(10001, 'fraqjs/fraq'), true);
+    await store.saveUser(20001, 'oauth-token', 'octocat');
+    assert.deepEqual(store.user(20001), { token: 'oauth-token', login: 'octocat' });
+    assert.equal(await store.removeUser(20001), true);
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
+});
+
+test('使用 App JWT 获取并缓存 installation token', async () => {
+  const { privateKey } = generateKeyPairSync('rsa', { modulusLength: 2048 });
+  const calls: Array<{ input: string; init?: RequestInit }> = [];
+  const fetcher = (async (input: string | URL | Request, init?: RequestInit) => {
+    calls.push({ input: String(input), init });
+    if (calls.length === 1) {
+      return Response.json({ id: 42 });
+    }
+    return Response.json({ token: 'installation-token', expires_at: '2099-01-01T00:00:00Z' });
+  }) as typeof fetch;
+  const api = new GitHubApi(
+    {
+      appId: '123',
+      privateKey: privateKey.export({ type: 'pkcs8', format: 'pem' }).toString(),
+      webhookSecret: 'secret',
+    },
+    undefined,
+    undefined,
+    fetcher,
+  );
+
+  assert.equal(await api.installationToken('fraqjs/fraq'), 'installation-token');
+  assert.equal(await api.installationToken('fraqjs/fraq'), 'installation-token');
+  assert.equal(calls.length, 2);
+  const jwt = new Headers(calls[0]?.init?.headers).get('authorization')?.replace('Bearer ', '');
+  assert.equal(jwt?.split('.').length, 3);
+  assert.equal(JSON.parse(Buffer.from(jwt?.split('.')[1] ?? '', 'base64url').toString()).iss, '123');
 });
 
 test('校验 GitHub App 签名并格式化事件', () => {
@@ -73,7 +116,7 @@ test('通过 GitHub App Webhook 向订阅群转发事件', async () => {
       sender_id: 10001,
       message_seq: 1,
       time: 1,
-      segments: [{ type: 'text', data: { text: 'github subscribe fraqjs/fraq' } }],
+      segments: [{ type: 'text', data: { text: 'github subscribe fraqjs/fraq issues/opened' } }],
       group: createRandomGroup(20001),
       group_member: createRandomGroupMember(20001, 10001),
     };
@@ -88,8 +131,43 @@ test('通过 GitHub App Webhook 向订阅群转发事件', async () => {
       async reaction() {},
     };
 
+    const commandPaths = ctx.router
+      .branches(session)
+      .filter((branch) => branch.type === 'command')
+      .map((branch) => [...branch.path, branch.command.name].join(' '));
+    for (const command of [
+      'github auth',
+      'github auth check',
+      'github install',
+      'github bind',
+      'github subscribe',
+      'github search code',
+      'github contribution',
+      'github repo',
+      'github view',
+      'github readme',
+      'github license',
+      'github release',
+      'github deployments',
+      'github star',
+      'github comment',
+      'github label',
+      'github close',
+      'github approve',
+      'github merge',
+      'github squash',
+      'github rebase',
+    ]) {
+      assert.ok(commandPaths.includes(command), `缺少命令：${command}`);
+    }
+
     assert.equal(await ctx.router.dispatch(session, raw), true);
-    assert.deepEqual(replies, ['已订阅 fraqjs/fraq 的 GitHub App 事件']);
+    assert.deepEqual(replies, ['已更新 fraqjs/fraq 的事件订阅']);
+
+    raw.segments = [{ type: 'text', data: { text: 'github auth check' } }];
+    replies.length = 0;
+    assert.equal(await ctx.router.dispatch(session, raw), true);
+    assert.deepEqual(replies, ['尚未授权 GitHub 用户']);
 
     const body = JSON.stringify({
       action: 'opened',
@@ -122,6 +200,23 @@ test('通过 GitHub App Webhook 向订阅群转发事件', async () => {
     const callCount = client.apiCalls.length;
     const duplicate = await app.request('/github/app/webhook', { method: 'POST', headers, body });
     assert.deepEqual(await duplicate.json(), { ok: true, duplicate: true });
+    assert.equal(client.apiCalls.length, callCount);
+
+    const closedBody = JSON.stringify({
+      action: 'closed',
+      repository: { full_name: 'fraqjs/fraq' },
+      issue: { number: 1, title: '测试 Issue' },
+    });
+    const ignored = await app.request('/github/app/webhook', {
+      method: 'POST',
+      headers: {
+        ...headers,
+        'x-github-delivery': 'delivery-2',
+        'x-hub-signature-256': `sha256=${createHmac('sha256', 'test-secret').update(closedBody).digest('hex')}`,
+      },
+      body: closedBody,
+    });
+    assert.equal(ignored.status, 200);
     assert.equal(client.apiCalls.length, callCount);
 
     const rejected = await app.request('/github/app/webhook', {
