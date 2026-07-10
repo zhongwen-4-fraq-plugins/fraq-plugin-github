@@ -84,11 +84,7 @@ export class GitHubEventService {
 
   isOperator(session: Session): boolean {
     if (this.options.adminUserIds?.includes(session.raw.sender_id)) return true;
-    return (
-      (this.options.allowGroupAdmins ?? true) &&
-      session.raw.message_scene === 'group' &&
-      session.raw.group_member.role !== 'member'
-    );
+    return session.raw.message_scene === 'group' && session.raw.group_member.role !== 'member';
   }
 
   boundRepository(session: Session): string | undefined {
@@ -171,7 +167,10 @@ export class GitHubEventService {
     return user.login;
   }
 
-  userToken(session: Session): string {
+  userToken(session: Session, requirePermission = true): string {
+    if (requirePermission && !this.isOperator(session)) {
+      throw new Error('只有配置列表中的用户或群主、群管理员可以执行此操作');
+    }
     const token = this.subscriptions.user(session.raw.sender_id)?.token;
     if (!token) throw new Error('此操作需要个人授权，请先执行 github auth');
     return token;

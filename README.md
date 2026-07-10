@@ -104,6 +104,17 @@ privateKey: [
 
 确保公网域名已把 `/github/auth` 和 `/github/app/webhook` 转发到 Hono 的端口。
 
+## QQ 侧权限
+
+QQ 侧操作员由两部分组成：
+
+- `adminUserIds` 配置列表中的 QQ 用户；
+- 当前群的群主或群管理员。
+
+只读查询对普通用户开放。修改群绑定、事件订阅、卸载 App 和 GitHub 写操作只允许
+上述操作员执行。GitHub 写操作还必须完成个人 OAuth 授权，因此需要同时满足
+“QQ 侧有操作权限”和“GitHub 侧有账号权限”。
+
 ## 命令表
 
 所有命令默认使用 `github` 前缀。`[参数]` 表示可以省略，`<参数>` 表示必须提供。
@@ -113,16 +124,16 @@ privateKey: [
 | 帮助 | `github help` | 无 | 查看简要命令帮助。 |
 | App | `github install` | 配置 `appSlug` | 获取 GitHub App 安装链接；别名：`github 安装`。 |
 | App | `github install check [owner/repo]` | App JWT | 检查仓库是否安装 App；省略仓库时使用群绑定仓库。 |
-| App | `github install revoke [owner/repo]` | 插件管理员或群管理员 | 从 GitHub 真正卸载 App，可能影响其他群，请谨慎使用。 |
+| App | `github install revoke [owner/repo]` | 配置列表或群管理 | 从 GitHub 真正卸载 App，可能影响其他群，请谨慎使用。 |
 | 授权 | `github auth` | 配置 OAuth Client | 获取当前 QQ 用户的 GitHub OAuth 授权链接；别名：`github 授权`。 |
 | 授权 | `github auth check` | 无 | 查看当前 QQ 用户绑定的 GitHub 账号。 |
 | 授权 | `github auth revoke` | 已授权 | 撤销当前 QQ 用户的 GitHub OAuth 授权。 |
-| 群设置 | `github bind <owner/repo>` | 插件管理员或群管理员 | 设置本群默认仓库；别名：`github 绑定`。 |
-| 群设置 | `github unbind` | 插件管理员或群管理员 | 解除本群默认仓库；别名：`github 解绑`。 |
-| 订阅 | `github subscribe <owner/repo>` | 插件管理员或群管理员 | 订阅仓库的全部 GitHub App 事件。 |
-| 订阅 | `github subscribe <owner/repo> <event[/action] ...>` | 插件管理员或群管理员 | 订阅一个或多个事件或指定 action；别名：`github 订阅`。 |
-| 订阅 | `github unsubscribe <owner/repo>` | 插件管理员或群管理员 | 取消仓库的全部群事件订阅。 |
-| 订阅 | `github unsubscribe <owner/repo> <event[/action] ...>` | 插件管理员或群管理员 | 只取消指定事件或 action；别名：`github 取消订阅`。 |
+| 群设置 | `github bind <owner/repo>` | 配置列表或群管理 | 设置本群默认仓库；别名：`github 绑定`。 |
+| 群设置 | `github unbind` | 配置列表或群管理 | 解除本群默认仓库；别名：`github 解绑`。 |
+| 订阅 | `github subscribe <owner/repo>` | 配置列表或群管理 | 订阅仓库的全部 GitHub App 事件。 |
+| 订阅 | `github subscribe <owner/repo> <event[/action] ...>` | 配置列表或群管理 | 订阅一个或多个事件或指定 action；别名：`github 订阅`。 |
+| 订阅 | `github unsubscribe <owner/repo>` | 配置列表或群管理 | 取消仓库的全部群事件订阅。 |
+| 订阅 | `github unsubscribe <owner/repo> <event[/action] ...>` | 配置列表或群管理 | 只取消指定事件或 action；别名：`github 取消订阅`。 |
 | 订阅 | `github subscriptions` | 群聊 | 查看本群全部事件订阅。 |
 | 搜索 | `github search <关键词>` | GitHub API | 搜索仓库；别名：`github 搜索`。 |
 | 搜索 | `github search repo <关键词>` | GitHub API | 搜索仓库。 |
@@ -138,17 +149,17 @@ privateKey: [
 | 查询 | `github release [owner/repo] [tag]` | GitHub API | 查看最新 Release 或指定 tag；只有一个无斜杠参数时视为 tag。 |
 | 查询 | `github deployments [owner/repo]` | GitHub API | 查看最近 10 个 Deployment；带仓库参数时也可使用 `deployment`。 |
 | 查询 | `github diff [目标]` | GitHub API | 查看 Pull Request Diff。 |
-| 仓库操作 | `github star [owner/repo]` | OAuth 授权 | Star 仓库。 |
-| 仓库操作 | `github unstar [owner/repo]` | OAuth 授权 | 取消 Star 仓库。 |
-| Issue/PR | `github comment [目标] <内容>` | OAuth 授权 | 评论 Issue 或 PR。 |
-| Issue/PR | `github label [目标] <标签 ...>` | OAuth 授权 | 添加一个或多个标签。 |
-| Issue/PR | `github unlabel [目标] <标签 ...>` | OAuth 授权 | 删除一个或多个标签。 |
-| Issue/PR | `github close [目标] [原因]` | OAuth 授权 | 关闭 Issue 或 PR；提供原因时会先发布评论。 |
-| Issue/PR | `github reopen [目标]` | OAuth 授权 | 重新开启 Issue 或 PR。 |
-| Pull Request | `github approve [目标] [审核意见]` | OAuth 授权 | 批准 Pull Request。 |
-| Pull Request | `github merge [目标] [提交标题]` | OAuth 授权 | 使用 merge 方式合并 Pull Request。 |
-| Pull Request | `github squash [目标] [提交标题]` | OAuth 授权 | 使用 squash 方式合并 Pull Request。 |
-| Pull Request | `github rebase [目标] [提交标题]` | OAuth 授权 | 使用 rebase 方式合并 Pull Request。 |
+| 仓库操作 | `github star [owner/repo]` | 配置列表或群管理 + OAuth | Star 仓库。 |
+| 仓库操作 | `github unstar [owner/repo]` | 配置列表或群管理 + OAuth | 取消 Star 仓库。 |
+| Issue/PR | `github comment [目标] <内容>` | 配置列表或群管理 + OAuth | 评论 Issue 或 PR。 |
+| Issue/PR | `github label [目标] <标签 ...>` | 配置列表或群管理 + OAuth | 添加一个或多个标签。 |
+| Issue/PR | `github unlabel [目标] <标签 ...>` | 配置列表或群管理 + OAuth | 删除一个或多个标签。 |
+| Issue/PR | `github close [目标] [原因]` | 配置列表或群管理 + OAuth | 关闭 Issue 或 PR；提供原因时会先发布评论。 |
+| Issue/PR | `github reopen [目标]` | 配置列表或群管理 + OAuth | 重新开启 Issue 或 PR。 |
+| Pull Request | `github approve [目标] [审核意见]` | 配置列表或群管理 + OAuth | 批准 Pull Request。 |
+| Pull Request | `github merge [目标] [提交标题]` | 配置列表或群管理 + OAuth | 使用 merge 方式合并 Pull Request。 |
+| Pull Request | `github squash [目标] [提交标题]` | 配置列表或群管理 + OAuth | 使用 squash 方式合并 Pull Request。 |
+| Pull Request | `github rebase [目标] [提交标题]` | 配置列表或群管理 + OAuth | 使用 rebase 方式合并 Pull Request。 |
 
 ### 参数省略规则
 
@@ -181,8 +192,7 @@ https://github.com/owner/repo/releases/tag/v1.0.0
 | `app.clientSecret` | OAuth Client secret | 使用 `auth` 时必填 |
 | `subscriptionsFile` | 群订阅、绑定和用户授权数据文件 | `data/fraq-plugin-github.json` |
 | `initialSubscriptions` | 启动时加入的初始订阅 | `{}` |
-| `adminUserIds` | 插件管理员 QQ 号 | `[]` |
-| `allowGroupAdmins` | 是否允许群主和群管理员修改订阅 | `true` |
+| `adminUserIds` | QQ 侧操作员列表；群主和群管理员无需加入 | `[]` |
 | `apiBaseUrl` | GitHub API 地址 | `https://api.github.com` |
 | `webBaseUrl` | GitHub 网页地址 | `https://github.com` |
 | `maxReplyLength` | 文本回复最大长度 | `3500` |

@@ -13,7 +13,6 @@ export interface GitHubPluginOptions {
   subscriptionsFile?: string;
   initialSubscriptions?: Record<string, string[]>;
   adminUserIds?: number[];
-  allowGroupAdmins?: boolean;
   apiBaseUrl?: string;
   webBaseUrl?: string;
   maxReplyLength?: number;

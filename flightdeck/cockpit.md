@@ -1,6 +1,6 @@
 # Cockpit — fraq-plugin-github
 
-Focus: QQ-GitHub-Bot 的 GitHub 功能对齐已完成
+Focus: QQ 侧权限模型已统一
 
 ## In flight
 

@@ -5,6 +5,7 @@ import HonoPlugin, { HonoService } from '@fraqjs/plugin-hono';
 import { GitHubApi } from '../src/github-api.js';
 import GitHubPlugin from '../src/index.js';
 import { normalizeRepository } from '../src/repository.js';
+import { GitHubEventService } from '../src/service.js';
 import { SubscriptionStore } from '../src/subscriptions.js';
 import { parseIssueTarget } from '../src/targets.js';
 import { formatWebhookEvent, verifyWebhookSignature } from '../src/webhook.js';
@@ -118,7 +119,7 @@ test('通过 GitHub App Webhook 向订阅群转发事件', async () => {
       time: 1,
       segments: [{ type: 'text', data: { text: 'github subscribe fraqjs/fraq issues/opened' } }],
       group: createRandomGroup(20001),
-      group_member: createRandomGroupMember(20001, 10001),
+      group_member: createRandomGroupMember(20001, 10001, { role: 'member' }),
     };
     const replies: Array<string | milky.OutgoingSegment_ZodInput[]> = [];
     const session: Session = {
@@ -130,6 +131,38 @@ test('通过 GitHub App Webhook 向订阅群转发事件', async () => {
       },
       async reaction() {},
     };
+
+    const service = ctx.resolve(GitHubEventService);
+    const groupAdminSession: Session = {
+      ...session,
+      raw: {
+        ...raw,
+        sender_id: 10002,
+        group_member: createRandomGroupMember(20001, 10002, { role: 'admin' }),
+      },
+    };
+    const regularMemberSession: Session = {
+      ...session,
+      raw: {
+        ...raw,
+        sender_id: 10003,
+        group_member: createRandomGroupMember(20001, 10003, { role: 'member' }),
+      },
+    };
+    const groupOwnerSession: Session = {
+      ...session,
+      raw: {
+        ...raw,
+        sender_id: 10004,
+        group_member: createRandomGroupMember(20001, 10004, { role: 'owner' }),
+      },
+    };
+    assert.equal(service.isOperator(session), true, '配置列表成员应有操作权限');
+    assert.equal(service.isOperator(groupAdminSession), true, '群管理员应有操作权限');
+    assert.equal(service.isOperator(groupOwnerSession), true, '群主应有操作权限');
+    assert.equal(service.isOperator(regularMemberSession), false, '普通群成员不应有操作权限');
+    assert.throws(() => service.userToken(regularMemberSession), /配置列表中的用户或群主、群管理员/);
+    assert.throws(() => service.userToken(session), /个人授权/);
 
     const commandPaths = ctx.router
       .branches(session)

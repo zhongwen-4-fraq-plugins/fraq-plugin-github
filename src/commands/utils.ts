@@ -20,7 +20,7 @@ export async function run(session: Session, logger: Logger, task: () => Promise<
 }
 
 export function requireOperator(session: Session, service: GitHubEventService): void {
-  if (!service.isOperator(session)) throw new Error('只有插件管理员或群管理员可以执行此操作');
+  if (!service.isOperator(session)) throw new Error('只有配置列表中的用户或群主、群管理员可以执行此操作');
 }
 
 export function truncate(value: string, limit: number): string {
