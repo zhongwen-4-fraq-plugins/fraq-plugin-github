@@ -11,6 +11,8 @@
 
 不要将代码全部写在一个文件中；按功能或职责拆分文件，并保持模块边界清晰。
 
+代码编写必须简洁，并以新手容易理解和维护为优先。
+
 ## Subscriptions
 
 <!-- one ~/.flightdeck-relative path per line; empty = subscribe to nothing global -->
