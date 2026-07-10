@@ -73,7 +73,7 @@ import GitHubPlugin from 'fraq-plugin-github';
 const ctx = Context.fromUrl('http://127.0.0.1:30001');
 
 ctx.install(HonoPlugin, {
-  host: '0.0.0.0',
+  host: '127.0.0.1',
   port: 4649,
 });
 

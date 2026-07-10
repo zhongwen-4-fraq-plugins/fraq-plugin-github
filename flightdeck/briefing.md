@@ -13,6 +13,8 @@
 
 代码编写必须简洁，并以新手容易理解和维护为优先。
 
+任何监听地址都不得使用 `0.0.0.0`；默认绑定 `127.0.0.1`，避免服务意外暴露到所有网络接口。
+
 ## Subscriptions
 
 <!-- one ~/.flightdeck-relative path per line; empty = subscribe to nothing global -->
