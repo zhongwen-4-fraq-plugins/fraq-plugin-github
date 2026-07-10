@@ -1,8 +1,8 @@
 {
-  "name": "fraq-plugin-template_change-me!",
+  "name": "fraq-plugin-github",
   "type": "module",
   "version": "0.1.0",
-  "description": "CHANGE ME",
+  "description": "Fraq plugin for GitHub commands, webhooks, README previews, and webpage screenshots",
   "files": [
     "dist"
   ],
@@ -10,25 +10,37 @@
   "typings": "dist/index.d.mts",
   "scripts": {
     "build": "tsdown",
+    "check": "biome check src test package.json && tsc --noEmit",
+    "test": "tsx --test test/**/*.test.ts",
     "prepack": "pnpm build"
   },
-  "keywords": [],
-  "author": "Your Name Here",
+  "keywords": [
+    "fraq",
+    "github",
+    "qq-bot",
+    "webhook"
+  ],
+  "author": "万俊辉",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/your-username/your-repo.git"
+    "url": "git+https://github.com/zhongwen-4-fraq-plugins/fraq-plugin-github.git"
   },
   "license": "MIT",
   "packageManager": "pnpm@11.9.0",
   "devDependencies": {
     "@biomejs/biome": "^2.5.1",
     "@fraqjs/mock": "^0.1.0",
+    "@fraqjs/plugin-hono": "^0.1.0",
     "@types/node": "^24.13.2",
     "tsdown": "^0.22.2",
     "tsx": "^4.22.4",
     "typescript": "^6.0.3"
   },
   "peerDependencies": {
-    "@fraqjs/fraq": "^0.13.0"
+    "@fraqjs/fraq": "^0.13.0",
+    "@fraqjs/plugin-hono": "^0.1.0"
+  },
+  "dependencies": {
+    "playwright": "^1.61.1"
   }
 }
