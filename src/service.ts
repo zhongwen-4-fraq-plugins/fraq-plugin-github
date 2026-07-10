@@ -167,10 +167,7 @@ export class GitHubEventService {
     return user.login;
   }
 
-  userToken(session: Session, requirePermission = true): string {
-    if (requirePermission && !this.isOperator(session)) {
-      throw new Error('只有配置列表中的用户或群主、群管理员可以执行此操作');
-    }
+  userToken(session: Session): string {
     const token = this.subscriptions.user(session.raw.sender_id)?.token;
     if (!token) throw new Error('此操作需要个人授权，请先执行 github auth');
     return token;

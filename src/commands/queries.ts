@@ -363,7 +363,7 @@ function formatSearchItem(type: 'repositories' | 'users' | 'code', item: Record<
 }
 
 async function replyContributions(session: Session, service: GitHubEventService, user: string): Promise<void> {
-  const token = service.userToken(session, false);
+  const token = service.userToken(session);
   const data = await service.api.request<{
     data?: {
       user?: {

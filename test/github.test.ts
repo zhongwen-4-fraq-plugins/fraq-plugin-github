@@ -161,7 +161,7 @@ test('通过 GitHub App Webhook 向订阅群转发事件', async () => {
     assert.equal(service.isOperator(groupAdminSession), true, '群管理员应有操作权限');
     assert.equal(service.isOperator(groupOwnerSession), true, '群主应有操作权限');
     assert.equal(service.isOperator(regularMemberSession), false, '普通群成员不应有操作权限');
-    assert.throws(() => service.userToken(regularMemberSession), /配置列表中的用户或群主、群管理员/);
+    assert.throws(() => service.userToken(regularMemberSession), /个人授权/);
     assert.throws(() => service.userToken(session), /个人授权/);
 
     const commandPaths = ctx.router

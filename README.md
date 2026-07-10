@@ -111,9 +111,9 @@ QQ 侧操作员由两部分组成：
 - `adminUserIds` 配置列表中的 QQ 用户；
 - 当前群的群主或群管理员。
 
-只读查询对普通用户开放。修改群绑定、事件订阅、卸载 App 和 GitHub 写操作只允许
-上述操作员执行。GitHub 写操作还必须完成个人 OAuth 授权，因此需要同时满足
-“QQ 侧有操作权限”和“GitHub 侧有账号权限”。
+只读查询对普通用户开放。修改群绑定、事件订阅和卸载 App 只允许上述操作员执行。
+Star、评论、审批等 GitHub 写操作不检查 QQ 管理身份，只检查当前用户自己的 OAuth
+授权和 GitHub 权限。
 
 ## 命令表
 
@@ -149,17 +149,17 @@ QQ 侧操作员由两部分组成：
 | 查询 | `github release [owner/repo] [tag]` | GitHub API | 查看最新 Release 或指定 tag；只有一个无斜杠参数时视为 tag。 |
 | 查询 | `github deployments [owner/repo]` | GitHub API | 查看最近 10 个 Deployment；带仓库参数时也可使用 `deployment`。 |
 | 查询 | `github diff [目标]` | GitHub API | 查看 Pull Request Diff。 |
-| 仓库操作 | `github star [owner/repo]` | 配置列表或群管理 + OAuth | Star 仓库。 |
-| 仓库操作 | `github unstar [owner/repo]` | 配置列表或群管理 + OAuth | 取消 Star 仓库。 |
-| Issue/PR | `github comment [目标] <内容>` | 配置列表或群管理 + OAuth | 评论 Issue 或 PR。 |
-| Issue/PR | `github label [目标] <标签 ...>` | 配置列表或群管理 + OAuth | 添加一个或多个标签。 |
-| Issue/PR | `github unlabel [目标] <标签 ...>` | 配置列表或群管理 + OAuth | 删除一个或多个标签。 |
-| Issue/PR | `github close [目标] [原因]` | 配置列表或群管理 + OAuth | 关闭 Issue 或 PR；提供原因时会先发布评论。 |
-| Issue/PR | `github reopen [目标]` | 配置列表或群管理 + OAuth | 重新开启 Issue 或 PR。 |
-| Pull Request | `github approve [目标] [审核意见]` | 配置列表或群管理 + OAuth | 批准 Pull Request。 |
-| Pull Request | `github merge [目标] [提交标题]` | 配置列表或群管理 + OAuth | 使用 merge 方式合并 Pull Request。 |
-| Pull Request | `github squash [目标] [提交标题]` | 配置列表或群管理 + OAuth | 使用 squash 方式合并 Pull Request。 |
-| Pull Request | `github rebase [目标] [提交标题]` | 配置列表或群管理 + OAuth | 使用 rebase 方式合并 Pull Request。 |
+| 仓库操作 | `github star [owner/repo]` | OAuth 授权 | Star 仓库。 |
+| 仓库操作 | `github unstar [owner/repo]` | OAuth 授权 | 取消 Star 仓库。 |
+| Issue/PR | `github comment [目标] <内容>` | OAuth 授权 | 评论 Issue 或 PR。 |
+| Issue/PR | `github label [目标] <标签 ...>` | OAuth 授权 | 添加一个或多个标签。 |
+| Issue/PR | `github unlabel [目标] <标签 ...>` | OAuth 授权 | 删除一个或多个标签。 |
+| Issue/PR | `github close [目标] [原因]` | OAuth 授权 | 关闭 Issue 或 PR；提供原因时会先发布评论。 |
+| Issue/PR | `github reopen [目标]` | OAuth 授权 | 重新开启 Issue 或 PR。 |
+| Pull Request | `github approve [目标] [审核意见]` | OAuth 授权 | 批准 Pull Request。 |
+| Pull Request | `github merge [目标] [提交标题]` | OAuth 授权 | 使用 merge 方式合并 Pull Request。 |
+| Pull Request | `github squash [目标] [提交标题]` | OAuth 授权 | 使用 squash 方式合并 Pull Request。 |
+| Pull Request | `github rebase [目标] [提交标题]` | OAuth 授权 | 使用 rebase 方式合并 Pull Request。 |
 
 ### 参数省略规则
 
