@@ -3,6 +3,7 @@ import { param, seg } from '@fraqjs/fraq';
 
 import { GitHubApiError } from './github-client.js';
 import type { GitHubService } from './service.js';
+import { registerSubscriptionCommands } from './subscription-commands.js';
 
 function quotedSegments(reply: milky.IncomingReplySegment): milky.IncomingSegment[] {
   return reply.data.segments;
@@ -150,6 +151,7 @@ export function registerCommands(router: Router, service: GitHubService, logger:
 
   router
     .command('unbind')
+    .alias('unsubscribe')
     .arg('repository', param.str())
     .execute((session, { repository }) =>
       run(session, logger, async () => {
@@ -160,14 +162,17 @@ export function registerCommands(router: Router, service: GitHubService, logger:
       }),
     );
 
-  router.command('bindings').execute((session) =>
-    run(session, logger, async () => {
-      const repositories = service.repositories(session);
-      await session.reply(
-        repositories.length ? `本群已绑定：\n${repositories.join('\n')}` : '本群尚未绑定 GitHub 仓库',
-      );
-    }),
-  );
+  router
+    .command('bindings')
+    .alias('subscriptions')
+    .execute((session) =>
+      run(session, logger, async () => {
+        const repositories = service.repositories(session);
+        await session.reply(
+          repositories.length ? `本群已绑定：\n${repositories.join('\n')}` : '本群尚未绑定 GitHub 仓库',
+        );
+      }),
+    );
 
   router
     .command('subscribe')
@@ -183,6 +188,7 @@ export function registerCommands(router: Router, service: GitHubService, logger:
 
   registerApiCommands(router.group('api'), service, logger);
   registerGraphqlCommands(router.group('graphql'), service, logger);
+  registerSubscriptionCommands(router.group('subscription'), service, logger);
 
   router.command('help').execute(async (session) => {
     await session.reply(
@@ -194,6 +200,9 @@ export function registerCommands(router: Router, service: GitHubService, logger:
         'github bind/unbind <owner/repo> — 管理群绑定',
         'github bindings — 查看本群绑定',
         'github subscribe <owner/repo> — 订阅全部 Webhook 事件',
+        'github subscription subscribe <owner/repo> — 订阅仓库',
+        'github subscription unsubscribe <owner/repo> — 取消本群订阅',
+        'github subscription list — 查看本群订阅',
         'github api <METHOD> <PATH> [JSON] — 调用任意 REST API',
         'github graphql <JSON> — 调用 GitHub GraphQL API',
         '回复含 GitHub 链接的消息并发送 github readme 或 github shot 也可使用。',

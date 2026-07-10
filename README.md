@@ -74,6 +74,11 @@ github bind <owner/repo>
 github unbind <owner/repo>
 github bindings
 github subscribe <owner/repo>
+github unsubscribe <owner/repo>
+github subscriptions
+github subscription subscribe <owner/repo>
+github subscription unsubscribe <owner/repo>
+github subscription list
 github api <GET|POST|PUT|PATCH|DELETE|HEAD> <API path> [JSON body]
 github graphql <{"query":"...","variables":{...}}>
 ```
@@ -83,6 +88,8 @@ github graphql <{"query":"...","variables":{...}}>
 ```text
 github bind fraqjs/fraq
 github subscribe fraqjs/fraq
+github subscription list
+github subscription unsubscribe fraqjs/fraq
 github readme fraqjs/fraq
 github shot https://github.com/fraqjs/fraq/issues
 github api GET /repos/fraqjs/fraq/issues?state=open
@@ -100,6 +107,14 @@ github graphql {"query":"query { viewer { login } }"}
 2. 在仓库中创建或更新指向 `webhook.publicUrl + webhook.path` 的 Webhook，并设置 `events: ['*']`。
 
 插件会验证每次投递的 SHA-256 签名，忽略重复的 Delivery ID，并把所有包含 `repository.full_name` 的事件转发到对应绑定群。常见事件会使用专用摘要，其他事件使用通用摘要，因此新增加的 GitHub 事件也能正常转发。
+
+推荐使用统一的订阅命令组：
+
+- `github subscription subscribe owner/repo`：创建或更新全事件 Webhook，并订阅到当前群；`add` 是其别名。
+- `github subscription unsubscribe owner/repo`：停止向当前群转发该仓库事件；`remove` 是其别名。
+- `github subscription list`：查看当前群的全部订阅。
+
+取消订阅只移除当前群的转发关系，不会删除 GitHub 仓库侧的 Webhook，以免影响其他仍在订阅该仓库的群。
 
 可以在 `initialBindings` 或绑定文件中使用 `*`，将所有收到的仓库事件转发到指定群。请谨慎使用，避免消息过多。
 

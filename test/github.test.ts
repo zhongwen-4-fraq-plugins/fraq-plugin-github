@@ -98,22 +98,33 @@ test('starts the plugin, dispatches commands, and forwards signed webhooks to a 
   const directory = await mkdtemp(join(tmpdir(), 'fraq-plugin-github-integration-'));
   const client = createMockMilkyClient();
   const ctx = Context.fromClient(client);
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = (async (input: string | URL | Request) => {
+    if (String(input).endsWith('/hooks?per_page=100')) {
+      return new Response('[]', { headers: { 'content-type': 'application/json' } });
+    }
+    return new Response('{"id":1}', { status: 201, headers: { 'content-type': 'application/json' } });
+  }) as typeof fetch;
   ctx.install(HonoPlugin, { host: '127.0.0.1', port: 0 });
   ctx.install(GitHubPlugin, {
     bindingsFile: join(directory, 'bindings.json'),
     initialBindings: { '20001': ['fraqjs/fraq'] },
-    webhook: { secret: 'test-secret' },
+    token: 'test-token',
+    adminUserIds: [10001],
+    webhook: { publicUrl: 'https://bot.example.com', secret: 'test-secret' },
   });
 
-  await ctx.start();
+  let started = false;
   try {
+    await ctx.start();
+    started = true;
     const raw: milky.IncomingGroupMessage = {
       message_scene: 'group',
       peer_id: 20001,
       sender_id: 10001,
       message_seq: 1,
       time: 1,
-      segments: [{ type: 'text', data: { text: 'github bindings' } }],
+      segments: [{ type: 'text', data: { text: 'github subscription list' } }],
       group: createRandomGroup(20001),
       group_member: createRandomGroupMember(20001, 10001),
     };
@@ -129,7 +140,17 @@ test('starts the plugin, dispatches commands, and forwards signed webhooks to a 
     };
 
     assert.equal(await ctx.router.dispatch(session, raw), true);
-    assert.deepEqual(replies, ['本群已绑定：\nfraqjs/fraq']);
+    assert.deepEqual(replies, ['本群 GitHub 订阅：\nfraqjs/fraq']);
+
+    raw.segments = [{ type: 'text', data: { text: 'github subscription unsubscribe fraqjs/fraq' } }];
+    replies.length = 0;
+    assert.equal(await ctx.router.dispatch(session, raw), true);
+    assert.deepEqual(replies, ['本群已取消订阅 fraqjs/fraq']);
+
+    raw.segments = [{ type: 'text', data: { text: 'github subscription subscribe fraqjs/fraq' } }];
+    replies.length = 0;
+    assert.equal(await ctx.router.dispatch(session, raw), true);
+    assert.deepEqual(replies, ['fraqjs/fraq 的全事件 Webhook 已创建并订阅到本群']);
 
     const body = JSON.stringify({
       action: 'opened',
@@ -161,7 +182,8 @@ test('starts the plugin, dispatches commands, and forwards signed webhooks to a 
       },
     });
   } finally {
-    await ctx.stop();
+    if (started) await ctx.stop();
+    globalThis.fetch = originalFetch;
     await rm(directory, { recursive: true, force: true });
   }
 });
