@@ -2,6 +2,7 @@ import type { Logger, milky, Router, Session } from '@fraqjs/fraq';
 import { param, seg } from '@fraqjs/fraq';
 
 import { GitHubApiError } from './github-client.js';
+import { registerPullRequestCommands } from './pull-request-commands.js';
 import type { GitHubService } from './service.js';
 import { registerSubscriptionCommands } from './subscription-commands.js';
 
@@ -188,6 +189,7 @@ export function registerCommands(router: Router, service: GitHubService, logger:
 
   registerApiCommands(router.group('api'), service, logger);
   registerGraphqlCommands(router.group('graphql'), service, logger);
+  registerPullRequestCommands(router.group('pr'), service, logger);
   registerSubscriptionCommands(router.group('subscription'), service, logger);
 
   router.command('help').execute(async (session) => {
@@ -203,6 +205,8 @@ export function registerCommands(router: Router, service: GitHubService, logger:
         'github subscription subscribe <owner/repo> — 订阅仓库',
         'github subscription unsubscribe <owner/repo> — 取消本群订阅',
         'github subscription list — 查看本群订阅',
+        'github pr approve [owner/repo] <编号> [意见] — 批准 PR',
+        'github pr merge [owner/repo] <编号> [方式] — 合并 PR',
         'github api <METHOD> <PATH> [JSON] — 调用任意 REST API',
         'github graphql <JSON> — 调用 GitHub GraphQL API',
         '回复含 GitHub 链接的消息并发送 github readme 或 github shot 也可使用。',

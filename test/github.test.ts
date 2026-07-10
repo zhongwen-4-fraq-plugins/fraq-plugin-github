@@ -99,9 +99,21 @@ test('starts the plugin, dispatches commands, and forwards signed webhooks to a 
   const client = createMockMilkyClient();
   const ctx = Context.fromClient(client);
   const originalFetch = globalThis.fetch;
-  globalThis.fetch = (async (input: string | URL | Request) => {
+  const githubRequests: Array<{ input: string; init?: RequestInit }> = [];
+  globalThis.fetch = (async (input: string | URL | Request, init?: RequestInit) => {
+    githubRequests.push({ input: String(input), init });
     if (String(input).endsWith('/hooks?per_page=100')) {
       return new Response('[]', { headers: { 'content-type': 'application/json' } });
+    }
+    if (String(input).endsWith('/pulls/7/reviews')) {
+      return new Response('{"state":"APPROVED","html_url":"https://github.com/fraqjs/fraq/pull/7#review"}', {
+        headers: { 'content-type': 'application/json' },
+      });
+    }
+    if (String(input).endsWith('/pulls/7/merge')) {
+      return new Response('{"merged":true,"message":"Pull Request successfully merged","sha":"abc123"}', {
+        headers: { 'content-type': 'application/json' },
+      });
     }
     return new Response('{"id":1}', { status: 201, headers: { 'content-type': 'application/json' } });
   }) as typeof fetch;
@@ -151,6 +163,21 @@ test('starts the plugin, dispatches commands, and forwards signed webhooks to a 
     replies.length = 0;
     assert.equal(await ctx.router.dispatch(session, raw), true);
     assert.deepEqual(replies, ['fraqjs/fraq 的全事件 Webhook 已创建并订阅到本群']);
+
+    raw.segments = [{ type: 'text', data: { text: 'github pr approve 7 代码检查通过' } }];
+    replies.length = 0;
+    assert.equal(await ctx.router.dispatch(session, raw), true);
+    assert.deepEqual(replies, ['✅ 已批准 fraqjs/fraq#7\nhttps://github.com/fraqjs/fraq/pull/7#review']);
+    assert.deepEqual(JSON.parse(String(githubRequests.at(-1)?.init?.body)), {
+      event: 'APPROVE',
+      body: '代码检查通过',
+    });
+
+    raw.segments = [{ type: 'text', data: { text: 'github pr merge fraqjs/fraq 7 rebase' } }];
+    replies.length = 0;
+    assert.equal(await ctx.router.dispatch(session, raw), true);
+    assert.deepEqual(replies, ['🎉 已使用 rebase 合并 fraqjs/fraq#7\nabc123']);
+    assert.deepEqual(JSON.parse(String(githubRequests.at(-1)?.init?.body)), { merge_method: 'rebase' });
 
     const body = JSON.stringify({
       action: 'opened',

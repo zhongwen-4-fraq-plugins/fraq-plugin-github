@@ -8,6 +8,7 @@
 - 创建 `events: ['*']` 的仓库 Webhook，接收并转发全部 GitHub 事件。
 - 订阅、取消订阅及查看当前群的订阅列表。
 - 查看仓库概况和 README；支持从回复消息中的 GitHub 链接识别仓库。
+- 在群内批准或合并 Pull Request，可使用群订阅仓库作为默认仓库。
 - 使用 Playwright 截取仓库、Issue、Pull Request 等 GitHub 页面。
 - 通过通用命令调用 GitHub JSON REST API 和 GraphQL API。
 - 校验 Webhook SHA-256 签名，并过滤重复的 Delivery ID。
@@ -74,6 +75,7 @@ github subscription subscribe fraqjs/fraq
 - 自动创建或更新订阅：目标仓库的 Webhooks 读写权限。
 - 读取私有仓库及 README：目标仓库的 Metadata 和 Contents 读取权限。
 - REST / GraphQL 写操作：对应 GitHub API 所要求的权限。
+- 批准或合并 Pull Request：目标仓库的 Pull requests 写权限。
 
 未配置 Token 时仍可读取公开仓库，但会受到 GitHub 未认证请求的速率限制，且无法使用自动 Webhook 订阅。
 
@@ -188,6 +190,33 @@ github shot https://github.com/fraqjs/fraq/issues
 
 回复一条包含 GitHub 链接的消息并发送 `github shot` 也可以截图。为防止 SSRF，插件只允许访问 `webBaseUrl` 对应主机上的 HTTPS 页面。
 
+### Pull Request 操作
+
+群管理员或插件管理员可以直接批准和合并 Pull Request：
+
+```text
+github pr approve [owner/repo] <PR编号> [审核意见]
+github pr merge [owner/repo] <PR编号> [merge|squash|rebase]
+```
+
+示例：
+
+```text
+github pr approve fraqjs/fraq 123 代码检查通过
+github pr merge fraqjs/fraq 123 squash
+```
+
+当前群只订阅一个仓库时，可以省略仓库：
+
+```text
+github pr approve 123 代码检查通过
+github pr merge 123 rebase
+```
+
+省略合并方式时默认使用 `squash`。批准不会自动合并；GitHub 也不允许用户批准自己创建的 Pull Request。Token 必须具有目标仓库的 Pull requests 写权限，分支保护规则仍然正常生效。
+
+GitHub 上的审批和合并记录会归属于 Token 对应的 GitHub 用户，而不是发出命令的 QQ 用户。建议只为可信管理员开放，并在部署层记录群命令操作日志。
+
 ### REST API
 
 ```text
@@ -231,6 +260,7 @@ github graphql {"query":"query($owner:String!,$name:String!){repository(owner:$o
 
 - 创建或取消订阅。
 - 创建或删除本地绑定。
+- 批准或合并 Pull Request。
 - 调用通用 REST 和 GraphQL API。
 
 满足以下任一条件的用户可以执行管理操作：
