@@ -1,6 +1,6 @@
-# npm 发布检查清单
-SUMMARY: 每次 npm 发布都必须使用与 package.json 版本一致的 v* Tag，并在检查、测试和构建通过后发布。
-READ WHEN: before any npm release or change to the npm publishing workflow
+# npm 与 GitHub Release 发布检查清单
+SUMMARY: 每次发布都必须使用与 package.json 版本一致的 v* Tag，通过验证后发布 npm，并从上次成功工作流以来的 commit 生成 GitHub Release。
+READ WHEN: before any npm or GitHub Release, or change to the publishing workflow
 
 ---
 
@@ -14,6 +14,15 @@ READ WHEN: before any npm release or change to the npm publishing workflow
 3. 推送 Tag。
 4. 工作流校验版本，执行 `pnpm check`、`pnpm test`、`pnpm build`。
 5. 使用 `npm publish --access public --provenance` 发布。
+6. 创建或更新同名 GitHub Release，正文只写 commit 更新日志。
+
+更新日志基线是同一 `publish.yml` 工作流最近一次成功运行的 `head_sha`，不是简单的
+上一个 Tag。脚本会检查最近一次已完成运行；若其失败或取消，则发出警告，并继续从
+更早的成功运行收集 commit，避免失败发布期间的更新被遗漏。第一次成功发布没有基线，
+会包含当前 Tag 可达的完整历史。
+
+发布步骤可安全重跑：若 npm 中已经存在当前名称和版本，则跳过 `npm publish`；GitHub
+Release 已存在时更新正文，不存在时创建。这样 npm 成功但 Release 失败后可以直接重跑。
 
 不要复用或移动已经发布的 Tag。版本不一致时应修改版本或创建正确的新 Tag，不要
 绕过工作流中的校验。

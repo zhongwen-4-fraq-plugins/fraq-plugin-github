@@ -223,7 +223,7 @@ pnpm build
 ## 发布到 npm
 
 仓库包含 `.github/workflows/publish.yml`，推送 `v*` 格式的 Tag 时会自动检查、测试、
-构建并发布到 npm。
+构建、发布到 npm，并创建对应的 GitHub Release。
 
 首次使用前，在 GitHub 仓库的 `Settings → Secrets and variables → Actions` 中添加：
 
@@ -238,3 +238,9 @@ git push origin v0.1.0
 
 工作流会检查 `v0.1.0` 是否与 `package.json` 的 `0.1.0` 一致；不一致时停止发布。
 成功发布的包会包含 npm provenance 供应链证明。
+
+Release 正文只包含从 Git commit 生成的更新日志。工作流会检查同一发布工作流的上次
+运行结果：如果上次失败或被取消，会发出警告，并从最近一次成功运行对应的 commit
+开始收集所有遗漏提交；如果从未成功运行，则收集当前 Tag 可达的完整提交历史。
+如果 npm 已发布但创建 Release 的步骤失败，重新运行工作流会跳过已存在的 npm 版本，
+继续创建或更新 Release。
