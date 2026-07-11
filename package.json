@@ -1,32 +1,37 @@
 {
   "name": "fraq-plugin-github",
-  "type": "module",
   "version": "0.1.0",
   "description": "Forward GitHub App events to QQ groups with Fraq",
-  "files": [
-    "dist"
-  ],
-  "main": "dist/index.mjs",
-  "typings": "dist/index.d.mts",
-  "scripts": {
-    "build": "tsdown",
-    "check": "biome check src test package.json && tsc --noEmit",
-    "test": "tsx --test test/**/*.test.ts",
-    "prepack": "pnpm build"
-  },
   "keywords": [
     "fraq",
     "github",
     "qq-bot",
     "webhook"
   ],
-  "author": "万俊辉",
+  "homepage": "https://github.com/zhongwen-4-fraq-plugins/fraq-plugin-github#readme",
+  "bugs": {
+    "url": "https://github.com/zhongwen-4-fraq-plugins/fraq-plugin-github/issues"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/zhongwen-4-fraq-plugins/fraq-plugin-github.git"
   },
   "license": "MIT",
-  "packageManager": "pnpm@11.9.0",
+  "author": "万俊辉",
+  "type": "module",
+  "main": "dist/index.mjs",
+  "directories": {
+    "test": "test"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "check": "biome check src test package.json && tsc --noEmit",
+    "test": "tsx --test test/**/*.test.ts",
+    "prepack": "pnpm build"
+  },
   "devDependencies": {
     "@biomejs/biome": "^2.5.1",
     "@fraqjs/mock": "^0.1.0",
@@ -39,5 +44,7 @@
   "peerDependencies": {
     "@fraqjs/fraq": "^0.13.0",
     "@fraqjs/plugin-hono": "^0.1.0"
-  }
+  },
+  "typings": "dist/index.d.mts",
+  "packageManager": "pnpm@11.9.0"
 }
