@@ -4,8 +4,16 @@ READ WHEN: before any npm or GitHub Release, or change to the publishing workflo
 
 ---
 
-发布由 `.github/workflows/publish.yml` 执行。仓库需要配置具有包发布权限的
-`NPM_TOKEN` Actions Secret。
+发布由 `.github/workflows/publish.yml` 执行，使用 npm Trusted Publisher 和 GitHub
+Actions OIDC，不保存 `NPM_TOKEN`。npm 包设置必须绑定以下 Publisher：
+
+- Organization or user：`zhongwen-4-fraq-plugins`
+- Repository：`fraq-plugin-github`
+- Workflow filename：`publish.yml`
+- Environment：空
+
+Trusted Publisher 要求 npm CLI 11.5.1+、Node.js 22.14.0+ 和工作流权限
+`id-token: write`。工作流固定使用 Node.js 24 与 npm 11.10.1。
 
 发布顺序：
 

@@ -225,9 +225,20 @@ pnpm build
 仓库包含 `.github/workflows/publish.yml`，推送 `v*` 格式的 Tag 时会自动检查、测试、
 构建、发布到 npm，并创建对应的 GitHub Release。
 
-首次使用前，在 GitHub 仓库的 `Settings → Secrets and variables → Actions` 中添加：
+工作流使用 npm Trusted Publisher 的 OIDC 短期凭据，不需要 `NPM_TOKEN`。在 npm
+包页面的 `Settings → Trusted publishing` 中添加 GitHub Actions Publisher：
 
-- `NPM_TOKEN`：具有该 npm 包发布权限的 Automation Token。
+- Organization or user：`zhongwen-4-fraq-plugins`
+- Repository：`fraq-plugin-github`
+- Workflow filename：`publish.yml`
+- Environment：留空
+
+字段区分大小写，必须与 GitHub 仓库和 `.github/workflows/publish.yml` 完全一致。
+Trusted Publisher 需要 npm CLI 11.5.1+ 和 Node.js 22.14.0+；工作流固定使用满足要求的
+Node.js 24 与 npm 11.10.1。
+
+如果 npm 上还不存在该包，需要先由包所有者手动完成首次发布，随后才能在包设置页绑定
+Trusted Publisher。绑定成功后应删除旧的发布 Token，后续发布全部通过 OIDC 完成。
 
 发布前先更新 `package.json` 中的版本，然后创建完全一致的 Tag：
 
