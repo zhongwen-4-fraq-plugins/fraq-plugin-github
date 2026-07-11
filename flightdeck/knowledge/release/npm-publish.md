@@ -32,5 +32,8 @@ Trusted Publisher 要求 npm CLI 11.5.1+、Node.js 22.14.0+ 和工作流权限
 发布步骤可安全重跑：若 npm 中已经存在当前名称和版本，则跳过 `npm publish`；GitHub
 Release 已存在时更新正文，不存在时创建。这样 npm 成功但 Release 失败后可以直接重跑。
 
+Release 正文格式固定为 `v<package.json version> 更新日志：`，后接从 1 开始的数字
+列表；每项直接使用 Git commit 标题，不附加其他章节或发布说明。
+
 不要复用或移动已经发布的 Tag。版本不一致时应修改版本或创建正确的新 Tag，不要
 绕过工作流中的校验。

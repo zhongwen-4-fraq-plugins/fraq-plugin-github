@@ -52,18 +52,18 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 $notes = [System.Collections.Generic.List[string]]::new()
-$notes.Add('## 更新日志')
-$notes.Add('')
+$package = Get-Content -Raw -Encoding utf8 package.json | ConvertFrom-Json
+$notes.Add("v$($package.version) 更新日志：")
+$index = 1
 foreach ($row in $commitRows) {
   if (-not $row) { continue }
   $parts = $row -split "`t", 2
-  $sha = $parts[0]
-  $subject = if ($parts.Count -gt 1) { $parts[1] } else { $sha }
-  $shortSha = $sha.Substring(0, 7)
-  $notes.Add("- $subject ([$shortSha](https://github.com/$env:GITHUB_REPOSITORY/commit/$sha))")
+  $subject = if ($parts.Count -gt 1) { $parts[1] } else { $parts[0] }
+  $notes.Add("$index. $subject")
+  $index += 1
 }
 if ($commitRows.Count -eq 0) {
-  $notes.Add('- 没有新的提交。')
+  $notes.Add('1. 没有新的提交。')
 }
 
 $notes | Set-Content -Encoding utf8 $OutputPath
