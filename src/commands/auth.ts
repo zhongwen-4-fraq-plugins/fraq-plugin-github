@@ -40,6 +40,7 @@ export function registerAuthCommands(router: Router, service: GitHubEventService
     .alias('安装')
     .execute((session) =>
       run(session, logger, async () => {
+        if (session.raw.message_scene === 'group') throw new Error('请在私聊中执行 GitHub App 安装');
         await session.reply(`请打开链接安装 GitHub App：\n${service.api.installationUrl()}`);
       }),
     );

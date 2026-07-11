@@ -1,5 +1,5 @@
 import { Context, type milky, type Session } from '@fraqjs/fraq';
-import { createMockMilkyClient, createRandomGroup, createRandomGroupMember } from '@fraqjs/mock';
+import { createMockMilkyClient, createRandomFriend, createRandomGroup, createRandomGroupMember } from '@fraqjs/mock';
 import HonoPlugin, { HonoService } from '@fraqjs/plugin-hono';
 
 import { GitHubApi } from '../src/github-api.js';
@@ -102,7 +102,7 @@ test('通过 GitHub App Webhook 向订阅群转发事件', async () => {
   const ctx = Context.fromClient(client);
   ctx.install(HonoPlugin, { host: '127.0.0.1', port: 0 });
   ctx.install(GitHubPlugin, {
-    app: { webhookSecret: 'test-secret' },
+    app: { appSlug: 'test-app', webhookSecret: 'test-secret' },
     subscriptionsFile: join(directory, 'subscriptions.json'),
     adminUserIds: [10001],
   });
@@ -163,6 +163,28 @@ test('通过 GitHub App Webhook 向订阅群转发事件', async () => {
     assert.equal(service.isOperator(regularMemberSession), false, '普通群成员不应有操作权限');
     assert.throws(() => service.userToken(regularMemberSession), /个人授权/);
     assert.throws(() => service.userToken(session), /个人授权/);
+
+    raw.segments = [{ type: 'text', data: { text: 'github install' } }];
+    replies.length = 0;
+    assert.equal(await ctx.router.dispatch(session, raw), true);
+    assert.deepEqual(replies, ['操作失败：请在私聊中执行 GitHub App 安装']);
+
+    const friendRaw: milky.IncomingFriendMessage = {
+      message_scene: 'friend',
+      peer_id: 10001,
+      sender_id: 10001,
+      message_seq: 2,
+      time: 1,
+      segments: [{ type: 'text', data: { text: 'github install' } }],
+      friend: createRandomFriend(10001),
+    };
+    const friendSession: Session = { ...session, raw: friendRaw };
+    replies.length = 0;
+    assert.equal(await ctx.router.dispatch(friendSession, friendRaw), true);
+    assert.deepEqual(replies, ['请打开链接安装 GitHub App：\nhttps://github.com/apps/test-app/installations/new']);
+
+    raw.segments = [{ type: 'text', data: { text: 'github subscribe fraqjs/fraq issues/opened' } }];
+    replies.length = 0;
 
     const commandPaths = ctx.router
       .branches(session)

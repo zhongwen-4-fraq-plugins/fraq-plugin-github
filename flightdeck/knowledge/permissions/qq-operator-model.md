@@ -14,3 +14,6 @@ QQ 侧操作员满足任一条件即可：
 
 GitHub 写操作使用 `userToken(session)`，只检查当前 QQ 用户是否完成 OAuth。群配置
 和 App 安装命令应显式调用 `requireOperator(session, service)`。
+
+`github install` 只允许在非群聊会话中生成安装链接，避免在群内公开安装入口；安装
+状态检查仍可在群内进行，卸载则继续使用 QQ 操作员权限。
