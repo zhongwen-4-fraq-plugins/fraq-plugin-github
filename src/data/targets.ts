@@ -1,9 +1,5 @@
-import { normalizeRepository } from './repository.js';
-
-export interface IssueTarget {
-  number: number;
-  repository: string;
-}
+import type { IssueTarget } from '../models/index.js';
+import { normalizeRepository } from './repositories.js';
 
 export function parseIssueTarget(input: string, fallbackRepository?: string): IssueTarget | undefined {
   const value = input.trim();

@@ -30,10 +30,48 @@ GitHub App 负责两件事：
 
 读取私有仓库时，插件使用 GitHub App installation token。Star、评论、审批等代表个人的操作使用该 QQ 用户授权的 OAuth token。
 
-## 安装
+## 通过 Fraq CLI 加载
+
+Fraq CLI 会把配置键 `github` 解析为 npm 包 `fraq-plugin-github`，导入包入口的默认导出，
+再把配置对象作为第二个参数传给 `ctx.install`。本插件的入口和依赖声明遵循该加载契约。
+
+在 `fraq.yml` 中同时安装 Hono 与 GitHub 插件：
+
+```yaml
+configVersion: 1
+fraqVersion: 0.14.0
+
+milky:
+  url: http://127.0.0.1:30001/
+
+plugins:
+  fraqjs/hono:
+    host: 127.0.0.1
+    port: 4649
+  github:
+    app:
+      appId: ${{ env:GITHUB_APP_ID }}
+      appSlug: ${{ env:GITHUB_APP_SLUG }}
+      clientId: ${{ env:GITHUB_CLIENT_ID }}
+      clientSecret: ${{ env:GITHUB_CLIENT_SECRET }}
+      privateKey: ${{ text:secrets/github-app.pem }}
+      webhookSecret: ${{ env:GITHUB_WEBHOOK_SECRET }}
+    adminUserIds: [123456789]
+```
+
+然后执行：
 
 ```bash
-pnpm add fraq-plugin-github @fraqjs/plugin-hono
+fraq start
+```
+
+CLI 会锁定并安装 `fraq-plugin-github`、其 Hono 插件依赖及对应版本。插件配置必须是 JSON
+可序列化的数据；密钥建议使用 Fraq CLI 的 `env` 或 `text` 引用传入。
+
+## 在 TypeScript 中手动加载
+
+```bash
+pnpm add fraq-plugin-github @fraqjs/fraq @fraqjs/plugin-hono
 ```
 
 ## 创建 GitHub App
@@ -197,7 +235,6 @@ https://github.com/owner/repo/releases/tag/v1.0.0
 | `apiBaseUrl` | GitHub API 地址 | `https://api.github.com` |
 | `webBaseUrl` | GitHub 网页地址 | `https://github.com` |
 | `maxReplyLength` | 文本回复最大长度 | `3500` |
-| `fetcher` | 自定义 Fetch 实现，可用于代理或测试 | Node.js 全局 `fetch` |
 
 订阅文件包含 OAuth token，请限制文件访问权限，不要提交到 Git 仓库。
 
@@ -210,9 +247,20 @@ https://github.com/owner/repo/releases/tag/v1.0.0
 - 定期检查 App 安装范围和已授权用户。
 
 如果服务器通过 `HTTP_PROXY` 或 `HTTPS_PROXY` 访问 GitHub，Node.js 24 可以设置
-`NODE_USE_ENV_PROXY=1`。其他环境也可以通过 `fetcher` 传入已经配置代理的 Fetch。
+`NODE_USE_ENV_PROXY=1`。
 
 ## 开发
+
+源码按领域分类：
+
+- `src/api`：GitHub API、App JWT、installation token 与 OAuth 请求。
+- `src/drawing`：贡献图等绘制逻辑。
+- `src/data`：仓库与目标解析、文本处理和订阅持久化。
+- `src/models`：插件配置、Webhook 与订阅数据模型。
+- `src/events`：Webhook 签名校验与事件格式化。
+- `src/commands`：Fraq 命令注册。
+- `src/services`：跨领域编排与 Fraq 服务。
+- `src/index.ts` / `src/plugin.ts`：公开导出与 Fraq CLI 默认加载入口。
 
 ```bash
 pnpm check

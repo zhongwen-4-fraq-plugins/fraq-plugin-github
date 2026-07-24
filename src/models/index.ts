@@ -16,7 +16,6 @@ export interface GitHubPluginOptions {
   apiBaseUrl?: string;
   webBaseUrl?: string;
   maxReplyLength?: number;
-  fetcher?: typeof fetch;
 }
 
 export interface SubscriptionRule {
@@ -41,4 +40,9 @@ export interface GitHubWebhookPayload {
   sender?: { login?: string };
   star?: { starred_at?: string | null };
   workflow_run?: { name?: string; conclusion?: string | null; status?: string; html_url?: string };
+}
+
+export interface IssueTarget {
+  number: number;
+  repository: string;
 }

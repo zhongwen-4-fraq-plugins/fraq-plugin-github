@@ -4,7 +4,7 @@ import { registerActionCommands } from './commands/actions.js';
 import { registerAuthCommands } from './commands/auth.js';
 import { registerQueryCommands } from './commands/queries.js';
 import { registerSubscriptionCommands } from './commands/subscriptions.js';
-import type { GitHubEventService } from './service.js';
+import type { GitHubEventService } from './services/index.js';
 
 export function registerCommands(router: Router, service: GitHubEventService, logger: Logger): void {
   registerAuthCommands(router, service, logger);

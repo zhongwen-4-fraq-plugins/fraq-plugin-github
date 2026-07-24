@@ -1,4 +1,4 @@
-import type { GitHubWebhookPayload } from './types.js';
+import type { GitHubWebhookPayload } from '../models/index.js';
 
 import { createHmac, timingSafeEqual } from 'node:crypto';
 

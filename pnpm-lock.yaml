@@ -9,18 +9,18 @@ importers:
   .:
     dependencies:
       '@fraqjs/fraq':
-        specifier: ^0.13.0
-        version: 0.13.0
+        specifier: ^0.14.0
+        version: 0.14.0
     devDependencies:
       '@biomejs/biome':
         specifier: ^2.5.1
         version: 2.5.1
-      '@fraqjs/mock':
-        specifier: ^0.1.0
-        version: 0.1.0(@fraqjs/fraq@0.13.0)
       '@fraqjs/plugin-hono':
+        specifier: ^0.2.1
+        version: 0.2.1(@fraqjs/fraq@0.14.0)
+      '@fraqjs/plugin-mock':
         specifier: ^0.1.0
-        version: 0.1.0(@fraqjs/fraq@0.13.0)
+        version: 0.1.0(@fraqjs/fraq@0.14.0)
       '@types/node':
         specifier: ^24.13.2
         version: 24.13.2
@@ -279,22 +279,23 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@fraqjs/fraq@0.13.0':
-    resolution: {integrity: sha512-aDpqcr6R/D2C/PpFskoRpxY4C78ZBfR0m9BII5a3t12iIQ/It01PKA5vswvvNZzibcZeW34HhBXx66IifLDHsA==}
+  '@fraqjs/fraq@0.14.0':
+    resolution: {integrity: sha512-oCVhcquY244zKen3OKD7xa/u49qSbWWTeUQajVaXDfWfklSMeCDTU+hbfXl+qo7gp1P4LQYXAGfyQYCJg8Y1kA==}
     engines: {node: '>=22'}
 
-  '@fraqjs/mock@0.1.0':
-    resolution: {integrity: sha512-Gzkfj/A6AIyaCwntQfXCTMhW3ztvq/dOrEoxLSJILEEKlb4J5petFGyQvRW8B4KFlcBgBx3BKVrEanr7uPUdrg==}
+  '@fraqjs/plugin-hono@0.2.1':
+    resolution: {integrity: sha512-qvMU0mT34N42+5ci4pxO6dSxULFXWnLrZYLxtveqBezAuWce3ric/8ppMpXT1JyBpJGixmVWh/gZI5o8I3tKpA==}
     peerDependencies:
-      '@fraqjs/fraq': ^0.6.0
+      '@fraqjs/fraq': ^0.14.0
 
-  '@fraqjs/plugin-hono@0.1.0':
-    resolution: {integrity: sha512-QGmKDm0FeHiMLEb+t+gvL2+dWrNPOVAq0OLWfSaXZiDJyQJFXqFeJbhzDWeEkHa0wBHpx5LDmUEp4DvZNAxDCg==}
+  '@fraqjs/plugin-mock@0.1.0':
+    resolution: {integrity: sha512-MkdviYMZjh4JRfCuKMePtG+T4EDuqlg+aGIAITzM0iFV3uYYepzOuacgxanxKqKfSZcIPb5wD64lIswsfjyaJg==}
+    engines: {node: '>=22'}
     peerDependencies:
-      '@fraqjs/fraq': ^0.10.3
+      '@fraqjs/fraq': ^0.14.0
 
-  '@hono/node-server@2.0.8':
-    resolution: {integrity: sha512-GuCWzLxwg218fy1JaHculFsdcuY12hxit83V+algozTPnwhNjLrRL/Alg9OYjLZLoUZ1rw/S4CdTMsnkSKCmFA==}
+  '@hono/node-server@2.0.11':
+    resolution: {integrity: sha512-bjD221KPLoJTWUwso1J6fGKiTXEUFedG/s0visavY4zakFPkeGURMRNly+FhBHs7T8Dz4qHaZIMX9ZoJHSJtKA==}
     engines: {node: '>=20'}
     peerDependencies:
       hono: ^4
@@ -491,8 +492,8 @@ packages:
     resolution: {integrity: sha512-/6gFNr0N04nob252sTQxyFLi3eKFRqIg1I87YcqAMT1i6SQrSF6KujUEQrtrjMV0H/eejTCltLdDSTEMzHbnsQ==}
     engines: {node: '>=20.20.0'}
 
-  hono@4.12.28:
-    resolution: {integrity: sha512-YwUvVpSF7m1yOblFPrU3Hbo8XhPheBoiyfGuII6z19LnOr6JpDnyyp7LFNrfV56wS8tpvtBFGRISHN02pDdLOA==}
+  hono@4.12.31:
+    resolution: {integrity: sha512-zJIHFrl6bq3RDd2YusFNCDlM8qUprxKswyi/OPzPyzKDdyBXDqWx8bZlZ7R+saTdSTatUmb3O7K4SspGPaEOQg==}
     engines: {node: '>=16.9.0'}
 
   hookable@6.1.1:
@@ -620,6 +621,18 @@ packages:
 
   undici-types@7.18.2:
     resolution: {integrity: sha512-AsuCzffGHJybSaRrmr5eHr81mwJU3kjw6M+uprWvCXiNeN9SOGwQ3Jn8jb8m3Z6izVgknn1R0FTCEAP2QrLY/w==}
+
+  ws@8.21.1:
+    resolution: {integrity: sha512-+0NTnW77fFN/DjQi6k/Sq/Yvk4Sgajw7urW8V+asjXnRgDs9gyGkdb7EzgfhA4goXsRIZKE28fzIXBHEzhuiWw==}
+    engines: {node: '>=10.0.0'}
+    peerDependencies:
+      bufferutil: ^4.0.1
+      utf-8-validate: '>=5.0.2'
+    peerDependenciesMeta:
+      bufferutil:
+        optional: true
+      utf-8-validate:
+        optional: true
 
 snapshots:
 
@@ -774,23 +787,27 @@ snapshots:
   '@esbuild/win32-x64@0.28.1':
     optional: true
 
-  '@fraqjs/fraq@0.13.0':
+  '@fraqjs/fraq@0.14.0':
     dependencies:
       mitt: 3.0.1
 
-  '@fraqjs/mock@0.1.0(@fraqjs/fraq@0.13.0)':
+  '@fraqjs/plugin-hono@0.2.1(@fraqjs/fraq@0.14.0)':
     dependencies:
-      '@fraqjs/fraq': 0.13.0
+      '@fraqjs/fraq': 0.14.0
+      '@hono/node-server': 2.0.11(hono@4.12.31)
+      hono: 4.12.31
+      ws: 8.21.1
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
 
-  '@fraqjs/plugin-hono@0.1.0(@fraqjs/fraq@0.13.0)':
+  '@fraqjs/plugin-mock@0.1.0(@fraqjs/fraq@0.14.0)':
     dependencies:
-      '@fraqjs/fraq': 0.13.0
-      '@hono/node-server': 2.0.8(hono@4.12.28)
-      hono: 4.12.28
+      '@fraqjs/fraq': 0.14.0
 
-  '@hono/node-server@2.0.8(hono@4.12.28)':
+  '@hono/node-server@2.0.11(hono@4.12.31)':
     dependencies:
-      hono: 4.12.28
+      hono: 4.12.31
 
   '@jridgewell/gen-mapping@0.3.13':
     dependencies:
@@ -945,7 +962,7 @@ snapshots:
     dependencies:
       resolve-pkg-maps: 1.0.0
 
-  hono@4.12.28: {}
+  hono@4.12.31: {}
 
   hookable@6.1.1: {}
 
@@ -1056,3 +1073,5 @@ snapshots:
       quansync: 1.0.0
 
   undici-types@7.18.2: {}
+
+  ws@8.21.1: {}

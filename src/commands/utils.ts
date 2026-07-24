@@ -1,8 +1,8 @@
 import type { Logger, Session } from '@fraqjs/fraq';
 
-import { GitHubApiError } from '../github-api.js';
-import type { GitHubEventService } from '../service.js';
-import type { SubscriptionRule } from '../types.js';
+import { GitHubApiError } from '../api/index.js';
+import type { SubscriptionRule } from '../models/index.js';
+import type { GitHubEventService } from '../services/index.js';
 
 export async function run(session: Session, logger: Logger, task: () => Promise<void>): Promise<void> {
   try {
@@ -21,10 +21,6 @@ export async function run(session: Session, logger: Logger, task: () => Promise<
 
 export function requireOperator(session: Session, service: GitHubEventService): void {
   if (!service.isOperator(session)) throw new Error('只有配置列表中的用户或群主、群管理员可以执行此操作');
-}
-
-export function truncate(value: string, limit: number): string {
-  return value.length > limit ? `${value.slice(0, limit)}\n…内容已截断` : value;
 }
 
 export function parseSubscriptionRules(input: string): Array<Omit<SubscriptionRule, 'repository'>> {

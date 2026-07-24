@@ -1,4 +1,4 @@
-import type { GitHubAppOptions } from './types.js';
+import type { GitHubAppOptions } from '../models/index.js';
 
 import { createSign } from 'node:crypto';
 

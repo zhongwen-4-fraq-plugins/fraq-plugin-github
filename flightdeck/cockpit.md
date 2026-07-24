@@ -1,6 +1,6 @@
 # Cockpit — fraq-plugin-github
 
-Focus: QQ 侧权限模型已统一
+Focus: Fraq CLI 加载契约与领域目录重构已完成
 
 ## In flight
 

@@ -1,14 +1,17 @@
-import { Context, type milky, type Session } from '@fraqjs/fraq';
-import { createMockMilkyClient, createRandomFriend, createRandomGroup, createRandomGroupMember } from '@fraqjs/mock';
+import type { milky, Session } from '@fraqjs/fraq';
 import HonoPlugin, { HonoService } from '@fraqjs/plugin-hono';
+import { createMockContext, createRandomFriend, createRandomGroup, createRandomGroupMember } from '@fraqjs/plugin-mock';
 
-import { GitHubApi } from '../src/github-api.js';
-import GitHubPlugin from '../src/index.js';
-import { normalizeRepository } from '../src/repository.js';
-import { GitHubEventService } from '../src/service.js';
-import { SubscriptionStore } from '../src/subscriptions.js';
-import { parseIssueTarget } from '../src/targets.js';
-import { formatWebhookEvent, verifyWebhookSignature } from '../src/webhook.js';
+import GitHubPlugin, {
+  drawContributions,
+  formatWebhookEvent,
+  GitHubApi,
+  GitHubEventService,
+  normalizeRepository,
+  parseIssueTarget,
+  SubscriptionStore,
+  verifyWebhookSignature,
+} from '../src/index.js';
 
 import assert from 'node:assert/strict';
 import { createHmac, generateKeyPairSync } from 'node:crypto';
@@ -16,6 +19,14 @@ import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
+
+test('符合 Fraq CLI 默认导出加载契约', () => {
+  assert.equal(GitHubPlugin.name, 'github');
+  assert.deepEqual(GitHubPlugin.inject, { hono: HonoService });
+  assert.deepEqual(GitHubPlugin.provides, [GitHubEventService]);
+  assert.equal(typeof GitHubPlugin.apply, 'function');
+  assert.equal(GitHubPlugin.apply.length, 2);
+});
 
 test('规范化 GitHub 仓库地址', () => {
   assert.equal(normalizeRepository('FraqJS/Fraq'), 'fraqjs/fraq');
@@ -96,10 +107,23 @@ test('校验 GitHub App 签名并格式化事件', () => {
   );
 });
 
+test('绘制 GitHub 贡献图', () => {
+  assert.equal(
+    drawContributions('octocat', {
+      totalContributions: 2,
+      weeks: [
+        {
+          contributionDays: [{ contributionLevel: 'FIRST_QUARTILE' }, { contributionLevel: 'FOURTH_QUARTILE' }],
+        },
+      ],
+    }),
+    '🟩 octocat 最近一年贡献：2\n░\n█\n·\n·\n·\n·\n·',
+  );
+});
+
 test('通过 GitHub App Webhook 向订阅群转发事件', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'fraq-plugin-github-integration-'));
-  const client = createMockMilkyClient();
-  const ctx = Context.fromClient(client);
+  const ctx = createMockContext();
   ctx.install(HonoPlugin, { host: '127.0.0.1', port: 0 });
   ctx.install(GitHubPlugin, {
     app: { appSlug: 'test-app', webhookSecret: 'test-secret' },
@@ -237,7 +261,7 @@ test('通过 GitHub App Webhook 向订阅群转发事件', async () => {
     const app = ctx.resolve(HonoService).app;
     const response = await app.request('/github/app/webhook', { method: 'POST', headers, body });
     assert.equal(response.status, 200);
-    assert.deepEqual(client.apiCalls.at(-1), {
+    assert.deepEqual(ctx.mock.apiCalls.at(-1), {
       endpoint: 'send_group_message',
       params: {
         group_id: 20001,
@@ -252,10 +276,10 @@ test('通过 GitHub App Webhook 向订阅群转发事件', async () => {
       },
     });
 
-    const callCount = client.apiCalls.length;
+    const callCount = ctx.mock.apiCalls.length;
     const duplicate = await app.request('/github/app/webhook', { method: 'POST', headers, body });
     assert.deepEqual(await duplicate.json(), { ok: true, duplicate: true });
-    assert.equal(client.apiCalls.length, callCount);
+    assert.equal(ctx.mock.apiCalls.length, callCount);
 
     const closedBody = JSON.stringify({
       action: 'closed',
@@ -272,7 +296,7 @@ test('通过 GitHub App Webhook 向订阅群转发事件', async () => {
       body: closedBody,
     });
     assert.equal(ignored.status, 200);
-    assert.equal(client.apiCalls.length, callCount);
+    assert.equal(ctx.mock.apiCalls.length, callCount);
 
     const rejected = await app.request('/github/app/webhook', {
       method: 'POST',

@@ -1,6 +1,6 @@
 import { type Logger, param, type Router } from '@fraqjs/fraq';
 
-import type { GitHubEventService } from '../service.js';
+import type { GitHubEventService } from '../services/index.js';
 import { requireOperator, run } from './utils.js';
 
 export function registerAuthCommands(router: Router, service: GitHubEventService, logger: Logger): void {

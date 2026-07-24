@@ -1,8 +1,10 @@
 import { type Logger, param, type Router, type Session } from '@fraqjs/fraq';
 
-import type { GitHubEventService } from '../service.js';
-import { parseGitHubUrl } from '../targets.js';
-import { run, truncate } from './utils.js';
+import { parseGitHubUrl } from '../data/index.js';
+import { truncate } from '../data/text.js';
+import { drawContributions } from '../drawing/index.js';
+import type { GitHubEventService } from '../services/index.js';
+import { run } from './utils.js';
 
 interface RepositoryData {
   default_branch: string;
@@ -385,15 +387,5 @@ async function replyContributions(session: Session, service: GitHubEventService,
   });
   const calendar = data.data?.user?.contributionsCollection?.contributionCalendar;
   if (!calendar) throw new Error(`找不到 GitHub 用户 ${user}`);
-  const symbols: Record<string, string> = {
-    NONE: '·',
-    FIRST_QUARTILE: '░',
-    SECOND_QUARTILE: '▒',
-    THIRD_QUARTILE: '▓',
-    FOURTH_QUARTILE: '█',
-  };
-  const rows = Array.from({ length: 7 }, (_, day) =>
-    (calendar.weeks ?? []).map((week) => symbols[week.contributionDays?.[day]?.contributionLevel ?? 'NONE']).join(''),
-  );
-  await session.reply(`🟩 ${user} 最近一年贡献：${calendar.totalContributions ?? 0}\n${rows.join('\n')}`);
+  await session.reply(drawContributions(user, calendar));
 }

@@ -1,5 +1,5 @@
-import { normalizeRepository } from './repository.js';
-import type { SubscriptionRule } from './types.js';
+import type { SubscriptionRule } from '../models/index.js';
+import { normalizeRepository } from './repositories.js';
 
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { dirname } from 'node:path';

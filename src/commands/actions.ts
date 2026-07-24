@@ -1,7 +1,7 @@
 import { type Logger, param, type Router, type Session } from '@fraqjs/fraq';
 
-import type { GitHubEventService } from '../service.js';
-import type { IssueTarget } from '../targets.js';
+import type { IssueTarget } from '../models/index.js';
+import type { GitHubEventService } from '../services/index.js';
 import { run } from './utils.js';
 
 export function registerActionCommands(router: Router, service: GitHubEventService, logger: Logger): void {

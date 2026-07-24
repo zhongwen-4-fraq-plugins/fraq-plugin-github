@@ -1,12 +1,11 @@
 import type { Logger, MilkyClient, Session } from '@fraqjs/fraq';
 import type { HonoService } from '@fraqjs/plugin-hono';
 
-import { GitHubApi } from './github-api.js';
-import { normalizeRepository } from './repository.js';
-import { SubscriptionStore } from './subscriptions.js';
-import { type IssueTarget, parseIssueTarget } from './targets.js';
-import type { GitHubPluginOptions, GitHubWebhookPayload, SubscriptionRule } from './types.js';
-import { formatWebhookEvent, verifyWebhookSignature } from './webhook.js';
+import { GitHubApi } from '../api/index.js';
+import { normalizeRepository, parseIssueTarget, SubscriptionStore } from '../data/index.js';
+import { collectText } from '../data/text.js';
+import { GitHubEventDispatcher, installWebhookRoute } from '../events/index.js';
+import type { GitHubPluginOptions, IssueTarget, SubscriptionRule } from '../models/index.js';
 
 import { randomUUID } from 'node:crypto';
 import { isAbsolute, resolve } from 'node:path';
@@ -18,20 +17,21 @@ interface OAuthState {
 
 export class GitHubEventService {
   readonly api: GitHubApi;
-  private readonly delivered = new Set<string>();
+  private readonly events: GitHubEventDispatcher;
   private readonly oauthStates = new Map<string, OAuthState>();
 
   constructor(
-    private readonly client: MilkyClient,
+    client: MilkyClient,
     private readonly logger: Logger,
     private readonly options: GitHubPluginOptions,
     private readonly subscriptions: SubscriptionStore,
   ) {
-    this.api = new GitHubApi(options.app, options.apiBaseUrl, options.webBaseUrl, options.fetcher);
+    this.api = new GitHubApi(options.app, options.apiBaseUrl, options.webBaseUrl);
+    this.events = new GitHubEventDispatcher(client, logger, subscriptions);
   }
 
   static async create(client: MilkyClient, logger: Logger, options: GitHubPluginOptions): Promise<GitHubEventService> {
-    if (!options.app?.webhookSecret) throw new Error('必须配置 app.webhookSecret');
+    if (!options?.app?.webhookSecret) throw new Error('必须配置 app.webhookSecret');
     const file = options.subscriptionsFile ?? 'data/fraq-plugin-github.json';
     const subscriptions = new SubscriptionStore(isAbsolute(file) ? file : resolve(process.cwd(), file));
     await subscriptions.load(options.initialSubscriptions);
@@ -39,27 +39,12 @@ export class GitHubEventService {
   }
 
   installRoutes(hono: HonoService): void {
-    hono.app.post(this.options.app.webhookPath ?? '/github/app/webhook', async (context) => {
-      const body = await context.req.text();
-      const signature = context.req.header('x-hub-signature-256');
-      if (!verifyWebhookSignature(this.options.app.webhookSecret, body, signature)) {
-        return context.json({ error: 'Invalid signature' }, 401);
-      }
-
-      const deliveryId = context.req.header('x-github-delivery');
-      if (deliveryId && this.delivered.has(deliveryId)) return context.json({ ok: true, duplicate: true });
-
-      let payload: GitHubWebhookPayload;
-      try {
-        payload = JSON.parse(body) as GitHubWebhookPayload;
-      } catch {
-        return context.json({ error: 'Invalid JSON' }, 400);
-      }
-
-      if (deliveryId) this.rememberDelivery(deliveryId);
-      await this.forward(context.req.header('x-github-event') ?? 'unknown', payload);
-      return context.json({ ok: true });
-    });
+    installWebhookRoute(
+      hono,
+      this.events,
+      this.options.app.webhookSecret,
+      this.options.app.webhookPath ?? '/github/app/webhook',
+    );
 
     hono.app.get('/github/auth', async (context) => {
       const code = context.req.query('code');
@@ -197,33 +182,6 @@ export class GitHubEventService {
     if (session.raw.message_scene !== 'group') throw new Error('此命令只能在群聊中使用');
     return session.raw.peer_id;
   }
-
-  private rememberDelivery(deliveryId: string): void {
-    this.delivered.add(deliveryId);
-    if (this.delivered.size > 1000) this.delivered.delete(this.delivered.values().next().value as string);
-  }
-
-  private async forward(event: string, payload: GitHubWebhookPayload): Promise<void> {
-    const repository = payload.repository?.full_name;
-    if (!repository) {
-      this.logger.info(`忽略没有仓库信息的 GitHub App 事件：${event}`);
-      return;
-    }
-
-    const message = formatWebhookEvent(event, payload);
-    await Promise.all(
-      this.subscriptions.groupsFor(repository, event, payload.action).map(async (groupId) => {
-        try {
-          await this.client.send_group_message({
-            group_id: groupId,
-            message: [{ type: 'text', data: { text: message } }],
-          });
-        } catch (error) {
-          this.logger.error(`GitHub 事件发送到群 ${groupId} 失败`, error);
-        }
-      }),
-    );
-  }
 }
 
 function escapeHtml(value: string): string {
@@ -231,13 +189,4 @@ function escapeHtml(value: string): string {
     const entities: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
     return entities[character] ?? character;
   });
-}
-
-function collectText(value: unknown): string[] {
-  if (typeof value === 'string') return [value];
-  if (Array.isArray(value)) return value.flatMap(collectText);
-  if (!value || typeof value !== 'object') return [];
-  return Object.entries(value).flatMap(([key, child]) =>
-    key === 'text' && typeof child === 'string' ? [child] : collectText(child),
-  );
 }
